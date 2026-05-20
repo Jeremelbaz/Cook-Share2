@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import com.example.cookshare.R
 import com.example.cookshare.databinding.FragmentLoginBinding
 
 class LoginFragment : Fragment() {
@@ -34,11 +36,11 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Firebase Auth — on branchera en Phase 6
+            // Firebase Auth — Phase 6
         }
 
         binding?.tvGoToRegister?.setOnClickListener {
-            // Navigation vers Register — on branchera en Phase 4
+            findNavController().navigate(LoginFragmentDirections.actionLoginToRegister())
         }
     }
 
