@@ -1,6 +1,14 @@
 package com.example.cookshare.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.cookshare.model.local.Converters
+
+@Entity(tableName = "posts")
+@TypeConverters(Converters::class)
 data class Post(
+    @PrimaryKey
     val id: String = "",
     val title: String = "",
     val description: String = "",
