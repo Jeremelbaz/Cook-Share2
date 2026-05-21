@@ -4,13 +4,19 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.example.cookshare.databinding.FragmentPostDetailBinding
+import com.example.cookshare.model.Model
+import com.squareup.picasso.Picasso
 
 class PostDetailFragment : Fragment() {
 
     private var _binding: FragmentPostDetailBinding? = null
     private val binding get() = _binding!!
+    private val args: PostDetailFragmentArgs by navArgs()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -24,17 +30,27 @@ class PostDetailFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.tvTitle.text = "Recipe Title"
-        binding.tvUserName.text = "Author Name"
-        binding.tvCategory.text = "Category"
-        binding.tvPrepTime.text = "Preparation time: 30 min"
-        binding.tvDescription.text = "Recipe description..."
-        binding.tvIngredients.text = "• Ingredient 1\n• Ingredient 2"
-        binding.tvInstructions.text = "1. Step 1\n2. Step 2"
-        binding.tvNotes.text = "Additional notes..."
+        val postId = args.postId
 
-        binding.btnLike.setOnClickListener {
-            // TODO: Like logic
+        Model.instance.getAllPostsLocal().observe(viewLifecycleOwner) { posts ->
+            val post = posts.find { it.id == postId } ?: return@observe
+
+            binding.tvTitle.text = post.title
+            binding.tvUserName.text = post.userName
+            binding.tvCategory.text = post.category
+            binding.tvPrepTime.text = "Preparation time: ${post.preparationTime}"
+            binding.tvDescription.text = post.description
+            binding.tvIngredients.text = post.ingredients.joinToString("\n") { "• $it" }
+            binding.tvInstructions.text = post.instructions.joinToString("\n") { "• $it" }
+            binding.tvNotes.text = post.notes
+
+            if (post.imageUrl.isNotEmpty()) {
+                Picasso.get().load(post.imageUrl).into(binding.imgRecipe)
+            }
+
+            binding.btnLike.setOnClickListener {
+                // TODO: Like logic
+            }
         }
     }
 
