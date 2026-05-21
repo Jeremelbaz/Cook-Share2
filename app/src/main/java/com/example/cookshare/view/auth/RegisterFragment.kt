@@ -8,46 +8,80 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.cookshare.databinding.FragmentRegisterBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
+import com.example.cookshare.model.User
 
 class RegisterFragment : Fragment() {
 
-    private var binding: FragmentRegisterBinding? = null
+    private var _binding: FragmentRegisterBinding? = null
+    private val binding get() = _binding!!
+    private lateinit var auth: FirebaseAuth
+    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentRegisterBinding.inflate(inflater, container, false)
-        return binding?.root
+    ): View {
+        _binding = FragmentRegisterBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding?.btnRegister?.setOnClickListener {
-            val email = binding?.etEmail?.text.toString().trim()
-            val fullName = binding?.etFullName?.text.toString().trim()
-            val password = binding?.etPassword?.text.toString().trim()
-            val confirmPassword = binding?.etConfirmPassword?.text.toString().trim()
+        auth = FirebaseAuth.getInstance()
 
-            if (email.isEmpty() || fullName.isEmpty() ||
-                password.isEmpty() || confirmPassword.isEmpty()) {
-                Toast.makeText(requireContext(),
-                    "Please fill all fields", Toast.LENGTH_SHORT).show()
+        binding.btnRegister.setOnClickListener {
+            val fullName = binding.etFullName.text.toString().trim()
+            val email = binding.etEmail.text.toString().trim()
+            val password = binding.etPassword.text.toString().trim()
+
+            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            if (password != confirmPassword) {
-                Toast.makeText(requireContext(),
-                    "Passwords do not match", Toast.LENGTH_SHORT).show()
+            if (password.length < 6) {
+                Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // Firebase Auth — Phase 6
+            binding.btnRegister.isEnabled = false
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener { result ->
+                    val firebaseUser = result.user!!
+
+                    val profileUpdate = UserProfileChangeRequest.Builder()
+                        .setDisplayName(fullName)
+                        .build()
+                    firebaseUser.updateProfile(profileUpdate)
+
+                    val user = User(
+                        uid = firebaseUser.uid,
+                        fullName = fullName,
+                        email = email
+                    )
+
+                    db.collection("users")
+                        .document(firebaseUser.uid)
+                        .set(user)
+                        .addOnSuccessListener {
+                            findNavController().navigate(
+                                RegisterFragmentDirections.actionRegisterToLogin()
+                            )
+                        }
+                }
+                .addOnFailureListener {
+                    binding.btnRegister.isEnabled = true
+                    Toast.makeText(requireContext(), "Registration failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
         }
 
-        binding?.tvGoToLogin?.setOnClickListener {
+        binding.tvGoToLogin.setOnClickListener {
             findNavController().navigate(
                 RegisterFragmentDirections.actionRegisterToLogin()
             )
@@ -56,6 +90,6 @@ class RegisterFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        binding = null
+        _binding = null
     }
 }
