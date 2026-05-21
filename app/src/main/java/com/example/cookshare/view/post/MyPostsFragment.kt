@@ -5,15 +5,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cookshare.databinding.FragmentMyPostsBinding
-import com.example.cookshare.model.Model
 import com.example.cookshare.view.feed.PostAdapter
+import com.example.cookshare.viewmodel.MyPostsViewModel
 
 class MyPostsFragment : Fragment() {
 
     private var _binding: FragmentMyPostsBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: MyPostsViewModel by viewModels()
     private lateinit var adapter: PostAdapter
 
     override fun onCreateView(
@@ -39,13 +41,10 @@ class MyPostsFragment : Fragment() {
         binding.rvMyPosts.layoutManager = LinearLayoutManager(requireContext())
         binding.rvMyPosts.adapter = adapter
 
-        val currentUserId = Model.instance.getCurrentUserId()
+        viewModel.myPosts.observe(viewLifecycleOwner) { posts ->
+            adapter.updatePosts(posts)
 
-        Model.instance.getAllPostsLocal().observe(viewLifecycleOwner) { posts ->
-            val myPosts = posts.filter { it.userId == currentUserId }
-            adapter.updatePosts(myPosts)
-
-            if (myPosts.isEmpty()) {
+            if (posts.isEmpty()) {
                 binding.tvEmpty.visibility = View.VISIBLE
                 binding.rvMyPosts.visibility = View.GONE
             } else {
@@ -53,8 +52,6 @@ class MyPostsFragment : Fragment() {
                 binding.rvMyPosts.visibility = View.VISIBLE
             }
         }
-
-        Model.instance.fetchAllPostsFromFirestore({}, {})
     }
 
     override fun onDestroyView() {
