@@ -48,6 +48,9 @@
         <action
             android:id="@+id/action_feed_to_profile"
             app:destination="@id/userProfileFragment" />
+        <action
+            android:id="@+id/action_feed_to_search"
+            app:destination="@id/searchFragment" />
     </fragment>
 
     <fragment
@@ -82,5 +85,10 @@
         android:id="@+id/myPostsFragment"
         android:name="com.example.cookshare.view.post.MyPostsFragment"
         android:label="MyPostsFragment" />
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.cookshare.view.search.SearchFragment"
+        android:label="SearchFragment" />
 
 </navigation>
