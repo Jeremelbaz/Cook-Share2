@@ -9,21 +9,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.cookshare.databinding.FragmentUserProfileBinding
+import com.example.cookshare.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.UserProfileChangeRequest
-import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
-import java.util.UUID
 
 class UserProfileFragment : Fragment() {
 
     private var _binding: FragmentUserProfileBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: UserProfileViewModel by viewModels()
     private lateinit var auth: FirebaseAuth
-    private val storage = FirebaseStorage.getInstance()
-    private var selectedImageUri: Uri? = null
 
     companion object {
         private const val IMAGE_PICK_CODE = 1001
@@ -43,14 +41,16 @@ class UserProfileFragment : Fragment() {
 
         auth = FirebaseAuth.getInstance()
 
-        val currentUser = auth.currentUser
-        if (currentUser != null) {
-            binding.tvUserName.text = currentUser.displayName ?: "No name"
-            binding.tvUserEmail.text = currentUser.email ?: "No email"
+        binding.tvUserName.text = viewModel.getCurrentUserName()
+        binding.tvUserEmail.text = viewModel.getCurrentUserEmail()
 
-            if (currentUser.photoUrl != null) {
-                Picasso.get().load(currentUser.photoUrl).into(binding.imgProfile)
-            }
+        val photoUrl = viewModel.getCurrentUserPhoto()
+        if (photoUrl != null) {
+            Picasso.get().load(photoUrl).into(binding.imgProfile)
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.btnEditProfile.isEnabled = !isLoading
         }
 
         binding.imgProfile.setOnClickListener {
@@ -75,35 +75,30 @@ class UserProfileFragment : Fragment() {
         binding.btnEditProfile.setOnClickListener {
             // TODO: Edit profile
         }
+
+        viewModel.loadCurrentUser()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK) {
-            selectedImageUri = data?.data
-            binding.imgProfile.setImageURI(selectedImageUri)
-            uploadProfileImage()
-        }
-    }
+            val uri: Uri = data?.data ?: return
+            binding.imgProfile.setImageURI(uri)
 
-    private fun uploadProfileImage() {
-        val uri = selectedImageUri ?: return
-        val fileName = "profiles/${UUID.randomUUID()}.jpg"
-        val ref = storage.reference.child(fileName)
-
-        ref.putFile(uri)
-            .addOnSuccessListener {
-                ref.downloadUrl.addOnSuccessListener { downloadUrl ->
-                    val profileUpdate = UserProfileChangeRequest.Builder()
-                        .setPhotoUri(downloadUrl)
-                        .build()
-                    auth.currentUser?.updateProfile(profileUpdate)
-                    Toast.makeText(requireContext(), "Profile photo updated!", Toast.LENGTH_SHORT).show()
+            viewModel.uploadProfilePhoto(
+                uri = uri,
+                onSuccess = {
+                    activity?.runOnUiThread {
+                        Toast.makeText(requireContext(), "Profile photo updated!", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onFailure = {
+                    activity?.runOnUiThread {
+                        Toast.makeText(requireContext(), "Upload failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
-            .addOnFailureListener {
-                Toast.makeText(requireContext(), "Upload failed: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+            )
+        }
     }
 
     override fun onDestroyView() {
