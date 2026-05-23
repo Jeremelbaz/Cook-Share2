@@ -8,10 +8,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.cookshare.databinding.FragmentRegisterBinding
+import com.example.cookshare.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.cookshare.model.User
 
 class RegisterFragment : Fragment() {
 
@@ -38,14 +38,20 @@ class RegisterFragment : Fragment() {
             val fullName = binding.etFullName.text.toString().trim()
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
+            val confirmPassword = binding.etConfirmPassword.text.toString().trim()
 
-            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (fullName.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
                 Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             if (password.length < 6) {
                 Toast.makeText(requireContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (password != confirmPassword) {
+                Toast.makeText(requireContext(), "Passwords do not match", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -70,9 +76,14 @@ class RegisterFragment : Fragment() {
                         .document(firebaseUser.uid)
                         .set(user)
                         .addOnSuccessListener {
+                            Toast.makeText(requireContext(), "Account created!", Toast.LENGTH_SHORT).show()
                             findNavController().navigate(
                                 RegisterFragmentDirections.actionRegisterToLogin()
                             )
+                        }
+                        .addOnFailureListener {
+                            binding.btnRegister.isEnabled = true
+                            Toast.makeText(requireContext(), "Profile save failed: ${it.message}", Toast.LENGTH_SHORT).show()
                         }
                 }
                 .addOnFailureListener {

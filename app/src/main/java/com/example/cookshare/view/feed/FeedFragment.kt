@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cookshare.databinding.FragmentFeedBinding
+import com.example.cookshare.model.Model
 import com.example.cookshare.viewmodel.PostsViewModel
 
 class FeedFragment : Fragment() {
@@ -38,7 +39,11 @@ class FeedFragment : Fragment() {
     private fun setupRecyclerView() {
         postAdapter = PostAdapter(
             posts = emptyList(),
-            onLikeClick = { post -> },
+            onLikeClick = { post ->
+                val userId = Model.instance.getCurrentUserId()
+                val newLikes = if (post.likes.contains(userId)) post.likes - userId else post.likes + userId
+                viewModel.updatePost(post.copy(likes = newLikes), {}, {})
+            },
             onPostClick = { post ->
                 findNavController().navigate(
                     FeedFragmentDirections.actionFeedToPostDetail(post.id)
