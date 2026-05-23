@@ -1,13 +1,12 @@
 package com.example.cookshare.view.profil
 
-import android.app.Activity
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -23,8 +22,10 @@ class UserProfileFragment : Fragment() {
     private val viewModel: UserProfileViewModel by viewModels()
     private lateinit var auth: FirebaseAuth
 
-    companion object {
-        private const val IMAGE_PICK_CODE = 1001
+    private val imagePicker = registerForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { handleSelectedImage(it) }
     }
 
     override fun onCreateView(
@@ -54,9 +55,7 @@ class UserProfileFragment : Fragment() {
         }
 
         binding.imgProfile.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK)
-            intent.type = "image/*"
-            startActivityForResult(intent, IMAGE_PICK_CODE)
+            imagePicker.launch("image/*")
         }
 
         binding.btnMyPosts.setOnClickListener {
@@ -73,32 +72,28 @@ class UserProfileFragment : Fragment() {
         }
 
         binding.btnEditProfile.setOnClickListener {
-            // TODO: Edit profile
+            Toast.makeText(requireContext(), "Edit profile coming soon", Toast.LENGTH_SHORT).show()
         }
 
         viewModel.loadCurrentUser()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK) {
-            val uri: Uri = data?.data ?: return
-            binding.imgProfile.setImageURI(uri)
+    private fun handleSelectedImage(uri: Uri) {
+        binding.imgProfile.setImageURI(uri)
 
-            viewModel.uploadProfilePhoto(
-                uri = uri,
-                onSuccess = {
-                    activity?.runOnUiThread {
-                        Toast.makeText(requireContext(), "Profile photo updated!", Toast.LENGTH_SHORT).show()
-                    }
-                },
-                onFailure = {
-                    activity?.runOnUiThread {
-                        Toast.makeText(requireContext(), "Upload failed: ${it.message}", Toast.LENGTH_SHORT).show()
-                    }
+        viewModel.uploadProfilePhoto(
+            uri = uri,
+            onSuccess = {
+                activity?.runOnUiThread {
+                    Toast.makeText(requireContext(), "Profile photo updated!", Toast.LENGTH_SHORT).show()
                 }
-            )
-        }
+            },
+            onFailure = {
+                activity?.runOnUiThread {
+                    Toast.makeText(requireContext(), "Upload failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
     }
 
     override fun onDestroyView() {

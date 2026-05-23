@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.cookshare.databinding.ItemPostRowBinding
 import com.example.cookshare.model.Post
+import com.squareup.picasso.Picasso
 
 class PostAdapter(
     private var posts: List<Post>,
@@ -28,6 +29,14 @@ class PostAdapter(
             tvTitle.text = post.title
             tvUserName.text = post.userName
             tvLikesCount.text = post.likes.size.toString()
+
+            if (post.imageUrl.isNotEmpty()) {
+                Picasso.get().load(post.imageUrl).into(imgRecipe)
+            }
+
+            if (post.userImageUrl.isNotEmpty()) {
+                Picasso.get().load(post.userImageUrl).into(imgUserAvatar)
+            }
 
             btnLike.setOnClickListener { onLikeClick(post) }
             root.setOnClickListener { onPostClick(post) }

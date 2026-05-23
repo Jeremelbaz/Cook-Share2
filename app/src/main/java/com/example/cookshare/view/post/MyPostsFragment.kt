@@ -6,8 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cookshare.databinding.FragmentMyPostsBinding
+import com.example.cookshare.model.Model
 import com.example.cookshare.view.feed.PostAdapter
 import com.example.cookshare.viewmodel.MyPostsViewModel
 
@@ -32,9 +34,15 @@ class MyPostsFragment : Fragment() {
 
         adapter = PostAdapter(
             posts = emptyList(),
-            onLikeClick = { post -> },
+            onLikeClick = { post ->
+                val userId = Model.instance.getCurrentUserId()
+                val newLikes = if (post.likes.contains(userId)) post.likes - userId else post.likes + userId
+                viewModel.updatePost(post.copy(likes = newLikes), {}, {})
+            },
             onPostClick = { post ->
-                // TODO: Navigate to PostDetail
+                findNavController().navigate(
+                    MyPostsFragmentDirections.actionMyPostsToPostDetail(post.id)
+                )
             }
         )
 
