@@ -32,7 +32,7 @@ class SplashFragment : Fragment() {
         binding.root.postDelayed({
             if (auth.currentUser != null) {
                 findNavController().navigate(
-                    SplashFragmentDirections.actionSplashToLogin()
+                    SplashFragmentDirections.actionSplashToFeed()
                 )
             } else {
                 findNavController().navigate(

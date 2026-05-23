@@ -5,14 +5,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cookshare.databinding.FragmentFeedBinding
-import com.example.cookshare.model.Post
+import com.example.cookshare.viewmodel.PostsViewModel
 
 class FeedFragment : Fragment() {
 
     private var binding: FragmentFeedBinding? = null
     private lateinit var postAdapter: PostAdapter
+    private val viewModel: PostsViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -25,15 +28,22 @@ class FeedFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         setupRecyclerView()
-        loadMockData()
+        observePosts()
+        setupButtons()
+        viewModel.refreshPosts({}, {})
     }
 
     private fun setupRecyclerView() {
         postAdapter = PostAdapter(
             posts = emptyList(),
             onLikeClick = { post -> },
-            onPostClick = { post -> }
+            onPostClick = { post ->
+                findNavController().navigate(
+                    FeedFragmentDirections.actionFeedToPostDetail(post.id)
+                )
+            }
         )
         binding?.recyclerViewFeed?.apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -41,31 +51,30 @@ class FeedFragment : Fragment() {
         }
     }
 
-    private fun loadMockData() {
-        val mockPosts = listOf(
-            Post(
-                id = "1",
-                title = "Spaghetti Carbonara",
-                userName = "@chef_mario",
-                description = "Classic Italian pasta",
-                preparationTime = "20 min"
-            ),
-            Post(
-                id = "2",
-                title = "Chicken Salad",
-                userName = "@rachel1112",
-                description = "Healthy and delicious",
-                preparationTime = "15 min"
-            ),
-            Post(
-                id = "3",
-                title = "Tiramisu",
-                userName = "@dessert_lover",
-                description = "Classic Italian dessert",
-                preparationTime = "30 min"
+    private fun observePosts() {
+        viewModel.posts.observe(viewLifecycleOwner) { posts ->
+            postAdapter.updatePosts(posts)
+        }
+    }
+
+    private fun setupButtons() {
+        binding?.fabAddPost?.setOnClickListener {
+            findNavController().navigate(
+                FeedFragmentDirections.actionFeedToAddEditPost()
             )
-        )
-        postAdapter.updatePosts(mockPosts)
+        }
+
+        binding?.btnSearch?.setOnClickListener {
+            findNavController().navigate(
+                FeedFragmentDirections.actionFeedToSearch()
+            )
+        }
+
+        binding?.btnProfile?.setOnClickListener {
+            findNavController().navigate(
+                FeedFragmentDirections.actionFeedToProfile()
+            )
+        }
     }
 
     override fun onDestroyView() {
