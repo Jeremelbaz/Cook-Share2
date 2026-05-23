@@ -104,6 +104,36 @@ class Model private constructor(context: Context) {
             .addOnFailureListener { onFailure(it) }
     }
 
+    // ───── COMMENTS ─────
+
+    fun addComment(
+        comment: Comment,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("comments")
+            .document(comment.id)
+            .set(comment)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure(it) }
+    }
+
+    fun getCommentsForPost(
+        postId: String,
+        onSuccess: (List<Comment>) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        db.collection("comments")
+            .whereEqualTo("postId", postId)
+            .orderBy("timestamp")
+            .get()
+            .addOnSuccessListener { result ->
+                val comments = result.toObjects(Comment::class.java)
+                onSuccess(comments)
+            }
+            .addOnFailureListener { onFailure(it) }
+    }
+
     // ───── CURRENT USER ─────
 
     fun getCurrentUserId(): String = auth.currentUser?.uid ?: ""

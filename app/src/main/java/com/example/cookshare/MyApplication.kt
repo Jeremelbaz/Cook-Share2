@@ -1,6 +1,7 @@
 package com.example.cookshare
 
 import android.app.Application
+import com.example.cookshare.model.Model
 import com.example.cookshare.model.local.AppLocalDb
 
 class MyApplication : Application() {
@@ -13,5 +14,6 @@ class MyApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         database = AppLocalDb.getDatabase(this)
+        Model.init(this)
     }
 }
