@@ -134,6 +134,19 @@ class Model private constructor(context: Context) {
             .addOnFailureListener { onFailure(it) }
     }
 
+    // ───── USERS ─────
+
+    fun saveUser(user: User, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        db.collection("users")
+            .document(user.uid)
+            .set(user)
+            .addOnSuccessListener {
+                scope.launch { localDb.userDao().insertUser(user) }
+                onSuccess()
+            }
+            .addOnFailureListener { onFailure(it) }
+    }
+
     // ───── CURRENT USER ─────
 
     fun getCurrentUserId(): String = auth.currentUser?.uid ?: ""

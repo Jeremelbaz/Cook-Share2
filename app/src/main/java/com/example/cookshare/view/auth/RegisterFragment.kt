@@ -8,17 +8,16 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.cookshare.databinding.FragmentRegisterBinding
+import com.example.cookshare.model.Model
 import com.example.cookshare.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
-import com.google.firebase.firestore.FirebaseFirestore
 
 class RegisterFragment : Fragment() {
 
     private var _binding: FragmentRegisterBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
-    private val db = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -72,19 +71,23 @@ class RegisterFragment : Fragment() {
                         email = email
                     )
 
-                    db.collection("users")
-                        .document(firebaseUser.uid)
-                        .set(user)
-                        .addOnSuccessListener {
-                            Toast.makeText(requireContext(), "Account created!", Toast.LENGTH_SHORT).show()
-                            findNavController().navigate(
-                                RegisterFragmentDirections.actionRegisterToLogin()
-                            )
+                    Model.instance.saveUser(
+                        user = user,
+                        onSuccess = {
+                            activity?.runOnUiThread {
+                                Toast.makeText(requireContext(), "Account created!", Toast.LENGTH_SHORT).show()
+                                findNavController().navigate(
+                                    RegisterFragmentDirections.actionRegisterToLogin()
+                                )
+                            }
+                        },
+                        onFailure = {
+                            activity?.runOnUiThread {
+                                setLoading(false)
+                                Toast.makeText(requireContext(), "Profile save failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                        .addOnFailureListener {
-                            setLoading(false)
-                            Toast.makeText(requireContext(), "Profile save failed: ${it.message}", Toast.LENGTH_SHORT).show()
-                        }
+                    )
                 }
                 .addOnFailureListener {
                     setLoading(false)
