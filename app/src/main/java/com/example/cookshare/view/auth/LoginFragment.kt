@@ -39,7 +39,7 @@ class LoginFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            binding.btnLogin.isEnabled = false
+            setLoading(true)
 
             auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener {
@@ -48,7 +48,7 @@ class LoginFragment : Fragment() {
                     )
                 }
                 .addOnFailureListener {
-                    binding.btnLogin.isEnabled = true
+                    setLoading(false)
                     Toast.makeText(requireContext(), "Login failed: ${it.message}", Toast.LENGTH_SHORT).show()
                 }
         }
@@ -58,6 +58,11 @@ class LoginFragment : Fragment() {
                 LoginFragmentDirections.actionLoginToRegister()
             )
         }
+    }
+
+    private fun setLoading(loading: Boolean) {
+        binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+        binding.btnLogin.isEnabled = !loading
     }
 
     override fun onDestroyView() {

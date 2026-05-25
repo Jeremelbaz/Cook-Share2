@@ -55,7 +55,7 @@ class RegisterFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            binding.btnRegister.isEnabled = false
+            setLoading(true)
 
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener { result ->
@@ -82,12 +82,12 @@ class RegisterFragment : Fragment() {
                             )
                         }
                         .addOnFailureListener {
-                            binding.btnRegister.isEnabled = true
+                            setLoading(false)
                             Toast.makeText(requireContext(), "Profile save failed: ${it.message}", Toast.LENGTH_SHORT).show()
                         }
                 }
                 .addOnFailureListener {
-                    binding.btnRegister.isEnabled = true
+                    setLoading(false)
                     Toast.makeText(requireContext(), "Registration failed: ${it.message}", Toast.LENGTH_SHORT).show()
                 }
         }
@@ -97,6 +97,11 @@ class RegisterFragment : Fragment() {
                 RegisterFragmentDirections.actionRegisterToLogin()
             )
         }
+    }
+
+    private fun setLoading(loading: Boolean) {
+        binding.progressBar.visibility = if (loading) View.VISIBLE else View.GONE
+        binding.btnRegister.isEnabled = !loading
     }
 
     override fun onDestroyView() {

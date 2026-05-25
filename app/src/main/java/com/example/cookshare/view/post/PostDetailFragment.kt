@@ -1,11 +1,13 @@
 package com.example.cookshare.view.post
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cookshare.databinding.FragmentPostDetailBinding
@@ -55,6 +57,21 @@ class PostDetailFragment : Fragment() {
             if (post.imageUrl.isNotEmpty()) {
                 Picasso.get().load(post.imageUrl).into(binding.imgRecipe)
             }
+
+            // Show Edit/Delete only to owner
+            val isOwner = post.userId == Model.instance.getCurrentUserId()
+            binding.btnEdit.visibility = if (isOwner) View.VISIBLE else View.GONE
+            binding.btnDelete.visibility = if (isOwner) View.VISIBLE else View.GONE
+
+            binding.btnEdit.setOnClickListener {
+                findNavController().navigate(
+                    PostDetailFragmentDirections.actionPostDetailToAddEditPost(post.id)
+                )
+            }
+
+            binding.btnDelete.setOnClickListener {
+                showDeleteConfirmation(post.id)
+            }
         }
 
         loadComments(postId)
@@ -100,6 +117,30 @@ class PostDetailFragment : Fragment() {
                 }
             )
         }
+    }
+
+    private fun showDeleteConfirmation(postId: String) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Delete Recipe")
+            .setMessage("Are you sure you want to delete this recipe?")
+            .setPositiveButton("Delete") { _, _ ->
+                Model.instance.deletePost(
+                    postId = postId,
+                    onSuccess = {
+                        activity?.runOnUiThread {
+                            Toast.makeText(requireContext(), "Recipe deleted", Toast.LENGTH_SHORT).show()
+                            findNavController().popBackStack()
+                        }
+                    },
+                    onFailure = {
+                        activity?.runOnUiThread {
+                            Toast.makeText(requireContext(), "Delete failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun loadComments(postId: String) {

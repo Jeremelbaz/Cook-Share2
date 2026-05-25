@@ -166,10 +166,30 @@
                 android:textSize="14sp" />
 
             <Button
-                android:id="@+id/btnLike"
+                android:id="@+id/btnEdit"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:text="Edit Recipe"
+                android:visibility="gone"
+                android:backgroundTint="@color/category_card"
+                android:textColor="@color/primary" />
+
+            <Button
+                android:id="@+id/btnDelete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Delete Recipe"
+                android:visibility="gone"
+                android:backgroundTint="#D32F2F"
+                android:textColor="@android:color/white" />
+
+            <Button
+                android:id="@+id/btnLike"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="Like"
                 android:backgroundTint="@color/primary" />
 

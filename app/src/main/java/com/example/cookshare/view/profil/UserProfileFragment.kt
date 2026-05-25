@@ -1,10 +1,12 @@
 package com.example.cookshare.view.profil
 
+import android.app.AlertDialog
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -72,10 +74,45 @@ class UserProfileFragment : Fragment() {
         }
 
         binding.btnEditProfile.setOnClickListener {
-            Toast.makeText(requireContext(), "Edit profile coming soon", Toast.LENGTH_SHORT).show()
+            showEditNameDialog()
         }
 
         viewModel.loadCurrentUser()
+    }
+
+    private fun showEditNameDialog() {
+        val input = EditText(requireContext()).apply {
+            setText(viewModel.getCurrentUserName())
+            setSelection(text.length)
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Edit Name")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val newName = input.text.toString().trim()
+                if (newName.isEmpty()) {
+                    Toast.makeText(requireContext(), "Name cannot be empty", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
+                viewModel.updateUserName(
+                    newName = newName,
+                    onSuccess = {
+                        activity?.runOnUiThread {
+                            binding.tvUserName.text = newName
+                            Toast.makeText(requireContext(), "Name updated!", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    onFailure = {
+                        activity?.runOnUiThread {
+                            Toast.makeText(requireContext(), "Update failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun handleSelectedImage(uri: Uri) {
