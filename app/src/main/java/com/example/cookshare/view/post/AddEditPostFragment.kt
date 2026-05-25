@@ -23,6 +23,7 @@ class AddEditPostFragment : Fragment() {
     private val args: AddEditPostFragmentArgs by navArgs()
     private var selectedImageUri: Uri? = null
     private var existingPost: Post? = null
+    private var postLoaded = false
 
     private val imagePicker = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -61,6 +62,7 @@ class AddEditPostFragment : Fragment() {
 
     private fun loadExistingPost(postId: String) {
         Model.instance.getAllPostsLocal().observe(viewLifecycleOwner) { posts ->
+            if (postLoaded) return@observe
             val post = posts.find { it.id == postId } ?: return@observe
 
             if (post.userId != Model.instance.getCurrentUserId()) {
@@ -69,6 +71,7 @@ class AddEditPostFragment : Fragment() {
                 return@observe
             }
 
+            postLoaded = true
             existingPost = post
             binding.etTitle.setText(post.title)
             binding.etDescription.setText(post.description)

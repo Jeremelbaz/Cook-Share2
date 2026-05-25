@@ -6,16 +6,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.cookshare.databinding.FragmentSearchBinding
-import com.example.cookshare.network.RetrofitClient
-import kotlinx.coroutines.launch
+import com.example.cookshare.viewmodel.SearchViewModel
 
 class SearchFragment : Fragment() {
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
+    private val viewModel: SearchViewModel by viewModels()
     private lateinit var adapter: MealAdapter
 
     override fun onCreateView(
@@ -30,53 +30,40 @@ class SearchFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = MealAdapter(emptyList()) { meal ->
-            // TODO: Navigate to meal detail
-        }
+        adapter = MealAdapter(emptyList()) {}
 
         binding.rvSearchResults.layoutManager = LinearLayoutManager(requireContext())
         binding.rvSearchResults.adapter = adapter
 
+        viewModel.meals.observe(viewLifecycleOwner) { meals ->
+            adapter.updateMeals(meals)
+            binding.tvEmpty.visibility = if (meals.isEmpty()) View.VISIBLE else View.GONE
+            binding.rvSearchResults.visibility = if (meals.isEmpty()) View.GONE else View.VISIBLE
+        }
+
+        viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            if (isLoading) {
+                binding.rvSearchResults.visibility = View.GONE
+                binding.tvEmpty.visibility = View.GONE
+            }
+        }
+
+        viewModel.error.observe(viewLifecycleOwner) { error ->
+            if (error != null) {
+                binding.tvEmpty.text = "Error: $error"
+                binding.tvEmpty.visibility = View.VISIBLE
+            }
+        }
+
         binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                query?.let { searchMeals(it) }
+                query?.let { viewModel.searchMeals(it) }
                 return true
             }
 
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
+            override fun onQueryTextChange(newText: String?): Boolean = false
         })
-    }
-
-    private fun searchMeals(query: String) {
-        binding.progressBar.visibility = View.VISIBLE
-        binding.rvSearchResults.visibility = View.GONE
-        binding.tvEmpty.visibility = View.GONE
-
-        lifecycleScope.launch {
-            try {
-                val response = RetrofitClient.mealApiService.searchMeals(query)
-                if (response.isSuccessful) {
-                    val meals = response.body()?.meals ?: emptyList()
-                    adapter.updateMeals(meals)
-
-                    if (meals.isEmpty()) {
-                        binding.tvEmpty.text = "No results found."
-                        binding.tvEmpty.visibility = View.VISIBLE
-                        binding.rvSearchResults.visibility = View.GONE
-                    } else {
-                        binding.tvEmpty.visibility = View.GONE
-                        binding.rvSearchResults.visibility = View.VISIBLE
-                    }
-                }
-            } catch (e: Exception) {
-                binding.tvEmpty.text = "Error: ${e.message}"
-                binding.tvEmpty.visibility = View.VISIBLE
-            } finally {
-                binding.progressBar.visibility = View.GONE
-            }
-        }
     }
 
     override fun onDestroyView() {

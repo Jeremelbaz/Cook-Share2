@@ -52,6 +52,13 @@ class UserProfileFragment : Fragment() {
             Picasso.get().load(photoUrl).into(binding.imgProfile)
         }
 
+        viewModel.user.observe(viewLifecycleOwner) { user ->
+            binding.tvUserName.text = user.fullName
+            if (user.profileImageUrl.isNotEmpty()) {
+                Picasso.get().load(user.profileImageUrl).into(binding.imgProfile)
+            }
+        }
+
         viewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             binding.btnEditProfile.isEnabled = !isLoading
         }

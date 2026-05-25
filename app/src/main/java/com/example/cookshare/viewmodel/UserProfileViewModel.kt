@@ -4,7 +4,10 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.cookshare.model.User
+import com.example.cookshare.model.local.AppLocalDb
+import com.example.cookshare.MyApplication
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
@@ -16,6 +19,7 @@ class UserProfileViewModel : ViewModel() {
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
     private val storage = FirebaseStorage.getInstance()
+    private val db_local = MyApplication.database
 
     private val _user = MutableLiveData<User>()
     val user: LiveData<User> = _user
@@ -34,6 +38,9 @@ class UserProfileViewModel : ViewModel() {
                 val user = doc.toObject(User::class.java)
                 if (user != null) {
                     _user.value = user
+                    viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        db_local.userDao().insertUser(user)
+                    }
                 }
                 _isLoading.value = false
             }
