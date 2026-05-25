@@ -4,11 +4,11 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.cookshare.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import com.example.cookshare.model.User
 import java.util.UUID
 
 class UserProfileViewModel : ViewModel() {
@@ -33,7 +33,7 @@ class UserProfileViewModel : ViewModel() {
             .addOnSuccessListener { doc ->
                 val user = doc.toObject(User::class.java)
                 if (user != null) {
-                    _user.value = user!!
+                    _user.value = user
                 }
                 _isLoading.value = false
             }
@@ -63,7 +63,30 @@ class UserProfileViewModel : ViewModel() {
                         .document(uid)
                         .update("profileImageUrl", downloadUrl.toString())
                         .addOnSuccessListener { onSuccess() }
+                        .addOnFailureListener { onFailure(it) }
                 }
+            }
+            .addOnFailureListener { onFailure(it) }
+    }
+
+    fun updateUserName(
+        newName: String,
+        onSuccess: () -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val firebaseUser = auth.currentUser ?: return
+
+        val profileUpdate = UserProfileChangeRequest.Builder()
+            .setDisplayName(newName)
+            .build()
+
+        firebaseUser.updateProfile(profileUpdate)
+            .addOnSuccessListener {
+                db.collection("users")
+                    .document(firebaseUser.uid)
+                    .update("fullName", newName)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { onFailure(it) }
             }
             .addOnFailureListener { onFailure(it) }
     }
